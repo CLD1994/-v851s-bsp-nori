@@ -1,14 +1,14 @@
-From 46ea102ed6059503ffe1e7d2679ceccb17e3129b Mon Sep 17 00:00:00 2001
+From 2b4fd3eb945f63e92940fa4450a034c38b933075 Mon Sep 17 00:00:00 2001
 From: CLD <cld.username@gmail.com>
-Date: Fri, 14 Jun 2024 08:20:56 +0000
-Subject: [PATCH] gc0328c
+Date: Fri, 19 Jul 2024 17:05:00 +0000
+Subject: [PATCH] gc0328c for sunxi-vin
 
-Change-Id: I0b7d963f3c0839aeefb65d2182829b34fb39c930
+Change-Id: I8f21eaa05643adf4620ce4916ca3b584b82fb7a9
 ---
  .../platform/sunxi-vin/modules/sensor/Kconfig |    4 +
  .../sunxi-vin/modules/sensor/Makefile         |    1 +
- .../sunxi-vin/modules/sensor/gc0328c.c        | 2187 +++++++++++++++++
- 3 files changed, 2192 insertions(+)
+ .../sunxi-vin/modules/sensor/gc0328c.c        | 2179 +++++++++++++++++
+ 3 files changed, 2184 insertions(+)
  create mode 100644 drivers/media/platform/sunxi-vin/modules/sensor/gc0328c.c
 
 diff --git a/drivers/media/platform/sunxi-vin/modules/sensor/Kconfig b/drivers/media/platform/sunxi-vin/modules/sensor/Kconfig
@@ -37,10 +37,10 @@ index 658e71f0..4edc7762 100644
  #obj-m			+= nvp6324/
 diff --git a/drivers/media/platform/sunxi-vin/modules/sensor/gc0328c.c b/drivers/media/platform/sunxi-vin/modules/sensor/gc0328c.c
 new file mode 100644
-index 00000000..93f8c57c
+index 00000000..4c771e56
 --- /dev/null
 +++ b/drivers/media/platform/sunxi-vin/modules/sensor/gc0328c.c
-@@ -0,0 +1,2187 @@
+@@ -0,0 +1,2179 @@
 +/*
 + * A V4L2 driver for GalaxyCore GC0328 cameras.
 + *
@@ -66,23 +66,12 @@ index 00000000..93f8c57c
 +/* for internal driver debug */
 +#define DEV_DBG_EN     0
 +#if (DEV_DBG_EN == 1)
-+#define vfe_dev_dbg(x, arg...) pr_debug("[CSI_DEBUG][GC0328]"x, ##arg)
++#define vin_dev_dbg(x, arg...) pr_debug("[CSI_DEBUG][GC0328]"x, ##arg)
 +#else
-+#define vfe_dev_dbg(x, arg...)
++#define vin_dev_dbg(x, arg...)
 +#endif
-+#define vfe_dev_err(x, arg...) pr_err("[CSI_ERR][GC0328]"x, ##arg)
-+#define vfe_dev_print(x, arg...) pr_info("[CSI][GC0328]"x, ##arg)
-+
-+/*
-+ *#define LOG_ERR_RET(x) { \
-+ *			  int ret; \
-+ *			  ret = x; \
-+ *			  if (ret < 0) { \
-+ *			    vfe_dev_err("error at %s\n", __func__); \
-+ *			    return ret; \
-+ *			  } \
-+ *			}
-+ */
++#define vin_dev_err(x, arg...) pr_err("[CSI_ERR][GC0328]"x, ##arg)
++#define vin_dev_print(x, arg...) pr_info("[CSI][GC0328]"x, ##arg)
 +
 +/* define module timing */
 +#define MCLK              (24*1000*1000)
@@ -94,7 +83,7 @@ index 00000000..93f8c57c
 +/*
 + * Our nominal (default) frame rate.
 + */
-+#define SENSOR_FRAME_RATE 30
++#define SENSOR_FRAME_RATE 20
 +
 +/*
 + * The GC0328 sits on i2c with ID 0x42
@@ -102,7 +91,7 @@ index 00000000..93f8c57c
 +#define I2C_ADDR 0x42
 +#define SENSOR_NAME "gc0328c"
 +
-+#define CLD_CLIP(a, i, s) (((a) > (s)) ? (s) : ((a) > (i)) ? (a) : (i))
++#define GC0328C_CLIP(a, i, s) (((a) > (s)) ? (s) : ((a) > (i)) ? (a) : (i))
 +
 +struct cfg_array {
 +	struct regval_list *regs;
@@ -115,7 +104,7 @@ index 00000000..93f8c57c
 +
 +	ret = x;
 +	if (ret < 0)
-+		vfe_dev_err("error at %s\n", __func__);
++		vin_dev_err("error at %s\n", __func__);
 +	return ret;
 +}
 +
@@ -1202,13 +1191,13 @@ index 00000000..93f8c57c
 +
 +	ret = sensor_write(sd, 0xfe, 0x00);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_write err at sensor_g_hflip!\n");
++		vin_dev_err("sensor_write err at sensor_g_hflip!\n");
 +		return ret;
 +	}
 +
 +	ret = sensor_read(sd, 0x17, &val);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_read err at sensor_g_hflip!\n");
++		vin_dev_err("sensor_read err at sensor_g_hflip!\n");
 +		return ret;
 +	}
 +
@@ -1229,13 +1218,13 @@ index 00000000..93f8c57c
 +
 +	ret = sensor_write(sd, 0xfe, 0x00);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_write err at sensor_s_hflip!\n");
++		vin_dev_err("sensor_write err at sensor_s_hflip!\n");
 +		return ret;
 +	}
 +
 +	ret = sensor_read(sd, 0x17, &val);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_read err at sensor_s_hflip!\n");
++		vin_dev_err("sensor_read err at sensor_s_hflip!\n");
 +		return ret;
 +	}
 +
@@ -1251,7 +1240,7 @@ index 00000000..93f8c57c
 +	}
 +	ret = sensor_write(sd, 0x17, val);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_write err at sensor_s_hflip!\n");
++		vin_dev_err("sensor_write err at sensor_s_hflip!\n");
 +		return ret;
 +	}
 +
@@ -1269,13 +1258,13 @@ index 00000000..93f8c57c
 +
 +	ret = sensor_write(sd, 0xfe, 0x00);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_write err at sensor_g_vflip!\n");
++		vin_dev_err("sensor_write err at sensor_g_vflip!\n");
 +		return ret;
 +	}
 +
 +	ret = sensor_read(sd, 0x17, &val);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_read err at sensor_g_vflip!\n");
++		vin_dev_err("sensor_read err at sensor_g_vflip!\n");
 +		return ret;
 +	}
 +
@@ -1296,13 +1285,13 @@ index 00000000..93f8c57c
 +
 +	ret = sensor_write(sd, 0xfe, 0x00);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_write err at sensor_s_vflip!\n");
++		vin_dev_err("sensor_write err at sensor_s_vflip!\n");
 +		return ret;
 +	}
 +
 +	ret = sensor_read(sd, 0x17, &val);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_read err at sensor_s_vflip!\n");
++		vin_dev_err("sensor_read err at sensor_s_vflip!\n");
 +		return ret;
 +	}
 +
@@ -1318,7 +1307,7 @@ index 00000000..93f8c57c
 +	}
 +	ret = sensor_write(sd, 0x17, val);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_write err at sensor_s_vflip!\n");
++		vin_dev_err("sensor_write err at sensor_s_vflip!\n");
 +		return ret;
 +	}
 +
@@ -1346,13 +1335,13 @@ index 00000000..93f8c57c
 +
 +	ret = sensor_write(sd, 0xfe, 0x00);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_write err at sensor_g_autoexp!\n");
++		vin_dev_err("sensor_write err at sensor_g_autoexp!\n");
 +		return ret;
 +	}
 +
 +	ret = sensor_read(sd, 0x4f, &val);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_read err at sensor_g_autoexp!\n");
++		vin_dev_err("sensor_read err at sensor_g_autoexp!\n");
 +		return ret;
 +	}
 +
@@ -1375,13 +1364,13 @@ index 00000000..93f8c57c
 +
 +	ret = sensor_write(sd, 0xfe, 0x00);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_write err at sensor_s_autoexp!\n");
++		vin_dev_err("sensor_write err at sensor_s_autoexp!\n");
 +		return ret;
 +	}
 +
 +	ret = sensor_read(sd, 0x4f, &val);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_read err at sensor_s_autoexp!\n");
++		vin_dev_err("sensor_read err at sensor_s_autoexp!\n");
 +		return ret;
 +	}
 +
@@ -1402,7 +1391,7 @@ index 00000000..93f8c57c
 +
 +	ret = sensor_write(sd, 0x4f, val);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_write err at sensor_s_autoexp!\n");
++		vin_dev_err("sensor_write err at sensor_s_autoexp!\n");
 +		return ret;
 +	}
 +
@@ -1420,13 +1409,13 @@ index 00000000..93f8c57c
 +
 +	ret = sensor_write(sd, 0xfe, 0x00);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_write err at sensor_g_autowb!\n");
++		vin_dev_err("sensor_write err at sensor_g_autowb!\n");
 +		return ret;
 +	}
 +
 +	ret = sensor_read(sd, 0x42, &val);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_read err at sensor_g_autowb!\n");
++		vin_dev_err("sensor_read err at sensor_g_autowb!\n");
 +		return ret;
 +	}
 +
@@ -1448,18 +1437,18 @@ index 00000000..93f8c57c
 +	ret = sensor_write_array(sd, sensor_wb_auto_regs,
 +				ARRAY_SIZE(sensor_wb_auto_regs));
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_write_array err at sensor_s_autowb!\n");
++		vin_dev_err("sensor_write_array err at sensor_s_autowb!\n");
 +		return ret;
 +	}
 +
 +	ret = sensor_write(sd, 0xfe, 0x00);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_write err at sensor_s_autowb!\n");
++		vin_dev_err("sensor_write err at sensor_s_autowb!\n");
 +		return ret;
 +	}
 +	ret = sensor_read(sd, 0x42, &val);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_read err at sensor_s_autowb!\n");
++		vin_dev_err("sensor_read err at sensor_s_autowb!\n");
 +		return ret;
 +	}
 +
@@ -1475,7 +1464,7 @@ index 00000000..93f8c57c
 +	}
 +	ret = sensor_write(sd, 0x42, val);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_write err at sensor_s_autowb!\n");
++		vin_dev_err("sensor_write err at sensor_s_autowb!\n");
 +		return ret;
 +	}
 +
@@ -1690,13 +1679,13 @@ index 00000000..93f8c57c
 +	cci_lock(sd);
 +	switch (on) {
 +	case STBY_ON:
-+		vfe_dev_dbg("STBY_ON\n");
++		vin_dev_dbg("STBY_ON\n");
 +		vin_gpio_write(sd, PWDN, CSI_GPIO_HIGH);
 +		usleep_range(5000, 12000);
 +		vin_set_mclk(sd, OFF);
 +		break;
 +	case STBY_OFF:
-+		vfe_dev_dbg("CSI_SUBDEV_STBY_OFF\n");
++		vin_dev_dbg("CSI_SUBDEV_STBY_OFF\n");
 +		vin_set_mclk_freq(sd, MCLK);
 +		vin_set_mclk(sd, ON);
 +		usleep_range(5000, 12000);
@@ -1725,7 +1714,7 @@ index 00000000..93f8c57c
 +		usleep_range(10000, 12000);
 +		break;
 +	case PWR_OFF:
-+		vfe_dev_dbg("CSI_SUBDEV_PWR_OFF\n");
++		vin_dev_dbg("CSI_SUBDEV_PWR_OFF\n");
 +		vin_gpio_write(sd, PWDN, CSI_GPIO_HIGH);
 +		usleep_range(10000, 12000);
 +		vin_gpio_write(sd, RESET, CSI_GPIO_LOW);
@@ -1772,13 +1761,13 @@ index 00000000..93f8c57c
 +
 +	ret = sensor_write(sd, 0xfe, 0x00);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_write err at sensor_detect!\n");
++		vin_dev_err("sensor_write err at sensor_detect!\n");
 +		return ret;
 +	}
 +
 +	ret = sensor_read(sd, 0xf0, &val);
 +	if (ret < 0) {
-+		vfe_dev_err("sensor_read err at sensor_detect!\n");
++		vin_dev_err("sensor_read err at sensor_detect!\n");
 +		return ret;
 +	}
 +
@@ -1824,6 +1813,9 @@ index 00000000..93f8c57c
 +
 +	ret = sensor_write_array(sd, sensor_default_regs, ARRAY_SIZE(sensor_default_regs));
 +
++	sensor_s_vflip(sd, 1);
++	sensor_s_hflip(sd, 1);
++
 +	if (ret < 0) {
 +		sensor_err("write sensor_default_regs error\n");
 +		return ret;
@@ -1857,7 +1849,7 @@ index 00000000..93f8c57c
 +	exif->brightness = 125;
 +	exif->flash_fire = 0;
 +
-+	exif->iso_speed = 50*((50 + CLD_CLIP(gain-0x40, 0, 0xff)*5)/50);
++	exif->iso_speed = 50*((50 + GC0328C_CLIP(gain-0x40, 0, 0xff)*5)/50);
 +	exif->exposure_time_num = 1;
 +	exif->exposure_time_den = 8000/shutter;
 +	return ret;
