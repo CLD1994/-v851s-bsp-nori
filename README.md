@@ -6,7 +6,7 @@
   请参考下列链接：
   > https://v853.docs.aw-ol.com/study/study_3getsdktoc/
 
-- 已经搭建完编译环境。
+- 已经搭建完编译环境。  
   搭建编译环境请参考下列链接：
   > https://v853.docs.aw-ol.com/study/study_2ubuntu/
 
@@ -41,7 +41,7 @@ git apply ${SDK_PATH}/patch/kernel/*.patch
     **注意：windows用户请将sdk放在wsl内再进行挂载，否则影响编译速度**
 - **编译环境+官方开源SDK**  
     `docker pull cld1994/tina-sdk:5.0-v853`  
-    即完成前置条件部分的状态
+    即完成了**前置条件**
 - **编译环境+官方开源SDK+BSP**  
     `docker pull cld1994/tina-sdk:5.0-nori`  
-    即完成应用BSP至SDK的状态
+    即完成了**应用BSP至SDK**
