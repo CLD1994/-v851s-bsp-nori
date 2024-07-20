@@ -1,5 +1,10 @@
 # v851s-bsp-nori 使用指南
 
+![孙老师的yolo小相机视频封面](https://i2.hdslb.com/bfs/archive/d6b2e0424d4c7081aa58c6cff940c24e08301e53.jpg@320w_200h_1c_!web-space-index-myvideo.webp)
+
+演示视频链接如下：  
+> https://www.bilibili.com/video/BV18m421G7nS
+
 ## 前置条件
 
 - 需要全志开源社区提供的Tina Linux v5.0 SDK。  
